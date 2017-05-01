@@ -102,7 +102,7 @@ func TestRFUtils(t *testing.T) {
 
 		d := CalculateDistance(lat1, lon1, lat2, lon2, R)
 
-		err := CheckFloat(d, 493.4e+3)
+		err := CheckFloat(float64(d), 493.4e+3)
 		if err != nil {
 			t.Error(err)
 		}
