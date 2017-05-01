@@ -101,7 +101,7 @@ func FresnelFirstZoneMax(freq Frequency, dist Distance) (float64, error) {
 // CalculateFoliageLoss calculates path loss in dB due to foliage based on the Weissberger model
 // https://en.wikipedia.org/wiki/Weissberger%27s_model
 func CalculateFoliageLoss(freq Frequency, depth Distance) (float64, error) {
-	if freq < 230e6 || freq > 95e9 {
+	if freq < 230*MHz || freq > 95*GHz {
 		return 0, fmt.Errorf("Frequency %.2f is not between 230MHz and 95GHz as required by the Weissberger model", freq)
 	}
 
@@ -119,18 +119,21 @@ func CalculateFoliageLoss(freq Frequency, depth Distance) (float64, error) {
 	return fading, nil
 }
 
+// CalculateRaleighFading calculates Raleigh fading
 // https://en.wikipedia.org/wiki/Rayleigh_fading
 func CalculateRaleighFading(freq Frequency) (float64, error) {
 	log.Panicf("Raleigh fading not yet implemented")
 	return 0.0, nil
 }
 
+// CalculateRicanFading calculates Rican fading
 // https://en.wikipedia.org/wiki/Rician_fading
 func CalculateRicanFading(freq Frequency) (float64, error) {
 	log.Panicf("Rican fading not yet implemented")
 	return 0.0, nil
 }
 
+// CalculateWeibullFading calculates Weibull fading
 // https://en.wikipedia.org/wiki/Weibull_fading
 func CalculateWeibullFading(freq Frequency) (float64, error) {
 	log.Panicf("Weibull fading not yet implemented")
