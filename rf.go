@@ -20,11 +20,14 @@ import (
 	"math"
 )
 
-// Frequency type to assist with unit coherence
+// Frequency type (Hz) to assist with unit coherence
 type Frequency float64
 
-// Distance type to assist with unit coherence
+// Distance type (m) to assist with unit coherence
 type Distance float64
+
+// Attenuation type (dB) to assist with unit coherence
+type Attenuation float64
 
 const (
 	//C is the speed of light in air in meters per second
@@ -47,10 +50,14 @@ const (
 	M  Distance = 1
 	Km          = M * 1000
 
+	// Attenuation helpers
+
+	DB Attenuation = 0
+
 	// R is the (average) radius of the earth
 	R = 6.371e6
 
-	// Pi for the formulaic use
+	// Pi for use in formulae
 	π = math.Pi
 )
 
@@ -98,14 +105,43 @@ func FresnelFirstZoneMax(freq Frequency, dist Distance) (float64, error) {
 	return 0.5 * math.Sqrt((C * float64(dist) / float64(freq))), nil
 }
 
+// CalculateFresnelKirckoffDiffractionParam Calculates the Fresnel-Kirchoff Diffraction parameter
+// https://en.wikipedia.org/wiki/Kirchhoff%27s_diffraction_formula
+// https://s.campbellsci.com/documents/au/technical-papers/line-of-sight-obstruction.pdf
+// d1 and d2 are the distances between the "knife edge" impingement and the transmitter/receiver
+// h is the impingement, where -ve is below LoS and +ve is above LoS
+func CalculateFresnelKirckoffDiffractionParam(freq Frequency, d1, d2, h Distance) (float64, error) {
+	wavelength := FrequencyToWavelength(freq)
+	v := float64(h) * math.Sqrt((2*float64(d1+d2))/(float64(wavelength)*float64(d1*d2)))
+	return v, nil
+}
+
+// CalculateFresnelKirchoffLossApprox Calculates approximate loss due to diffraction using
+// the Fresnel-Kirchoff Diffraction parameter. This approximate is valid for values >= -0.7
+// https://s.campbellsci.com/documents/au/technical-papers/line-of-sight-obstruction.pdf
+func CalculateFresnelKirchoffLossApprox(v float64) (Attenuation, error) {
+	if !(v >= -0.7) {
+		return 0.0, fmt.Errorf("Fresnel-Kirchoff loss approximation only valid for v >= -0.7")
+	}
+	loss := 6.9 + 20*math.Log10(math.Sqrt(math.Pow(v-0.1, 2)+1)+v-0.1)
+	return Attenuation(loss), nil
+}
+
+const (
+	WeissbergerMinFreq = 230 * MHz
+	WeissbergerMaxFreq = 95 * GHz
+	WeissbergerMinDist = 0 * M
+	WeissbergerMaxDist = 400 * M
+)
+
 // CalculateFoliageLoss calculates path loss in dB due to foliage based on the Weissberger model
 // https://en.wikipedia.org/wiki/Weissberger%27s_model
 func CalculateFoliageLoss(freq Frequency, depth Distance) (float64, error) {
-	if freq < 230*MHz || freq > 95*GHz {
+	if freq < WeissbergerMinFreq || freq > WeissbergerMaxFreq {
 		return 0, fmt.Errorf("Frequency %.2f is not between 230MHz and 95GHz as required by the Weissberger model", freq)
 	}
 
-	if depth > 400 || depth < 0 {
+	if depth < WeissbergerMinDist || WeissbergerMaxDist > 0 {
 		return 0, fmt.Errorf("Depth %.2f is not between 0 and 400m as required by the Weissberger model", depth)
 	}
 

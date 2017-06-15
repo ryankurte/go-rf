@@ -2,11 +2,12 @@ package rf
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
 )
 
-const allowedError = 0.001
+const allowedError = 0.002
 
 func CheckFloat(actual, expected float64) error {
 	if err := math.Abs(actual-expected) / math.Abs(actual); err > allowedError {
@@ -20,45 +21,25 @@ func TestRFUtils(t *testing.T) {
 	t.Run("Can convert from dBm to mW", func(t *testing.T) {
 
 		mw := DecibelMilliVoltToMilliWatt(0.0)
-		err := CheckFloat(mw, 1.0)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 1.0, mw, allowedError)
 
 		mw = DecibelMilliVoltToMilliWatt(10.0)
-		err = CheckFloat(mw, 10.0)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 10.0, mw, allowedError)
 
 		mw = DecibelMilliVoltToMilliWatt(-20.0)
-		err = CheckFloat(mw, 0.01)
-		if err != nil {
-			t.Error(err)
-		}
-
+		assert.InDelta(t, 0.01, mw, allowedError)
 	})
 
 	t.Run("Can convert from mW to dBm", func(t *testing.T) {
 
 		dbm := MilliWattToDecibelMilliVolt(1.0)
-		err := CheckFloat(dbm, 0.0)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 0.0, dbm, allowedError)
 
 		dbm = MilliWattToDecibelMilliVolt(10.0)
-		err = CheckFloat(dbm, 10.0)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 10.0, dbm, allowedError)
 
 		dbm = MilliWattToDecibelMilliVolt(0.01)
-		err = CheckFloat(dbm, -20)
-		if err != nil {
-			t.Error(err)
-		}
-
+		assert.InDelta(t, -20, dbm, allowedError)
 	})
 
 	t.Run("Can calculate free space attenuation", func(t *testing.T) {
@@ -66,34 +47,19 @@ func TestRFUtils(t *testing.T) {
 		// Test against precalculated results
 
 		dBLoss := FreeSpaceAttenuationDB(2.4*GHz, 1e+0)
-		err := CheckFloat(dBLoss, 40.02)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 40.05, dBLoss, allowedError)
 
 		dBLoss = FreeSpaceAttenuationDB(2.4*GHz, 1e+3)
-		err = CheckFloat(dBLoss, 100.05)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 100.05, dBLoss, allowedError)
 
 		dBLoss = FreeSpaceAttenuationDB(2.4*GHz, 1e+6)
-		err = CheckFloat(dBLoss, 160.05)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 160.05, dBLoss, allowedError)
 
 		dBLoss = FreeSpaceAttenuationDB(433*MHz, 1e+3)
-		err = CheckFloat(dBLoss, 85.178)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 85.178, dBLoss, allowedError)
 
 		dBLoss = FreeSpaceAttenuationDB(433*MHz, 1e+6)
-		err = CheckFloat(dBLoss, 145.178)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.InDelta(t, 145.178, dBLoss, allowedError)
 	})
 
 	t.Run("Can calculate the distance between two lat/lon locations", func(t *testing.T) {
@@ -101,12 +67,7 @@ func TestRFUtils(t *testing.T) {
 		lat2, lon2 := -41.2865, 174.7762
 
 		d := CalculateDistance(lat1, lon1, lat2, lon2, R)
-
-		err := CheckFloat(float64(d), 493.4e+3)
-		if err != nil {
-			t.Error(err)
-		}
-
+		assert.InDelta(t, 493.4e+3, float64(d), 1e+3)
 	})
 
 	t.Run("Can calculate fresnel points", func(t *testing.T) {
@@ -114,23 +75,28 @@ func TestRFUtils(t *testing.T) {
 		// Magic Numbers from: http://www.wirelessconnections.net/calcs/FresnelZone.asp
 
 		zone, err := FresnelFirstZoneMax(2.4*GHz, 10e+3)
-		if err != nil {
-			t.Error(err)
-		}
-		err = CheckFloat(zone, 17.671776)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t, err)
+		assert.InDelta(t, 17.671776, zone, allowedError)
 
 		zone, err = FresnelFirstZoneMax(2.4*GHz, 100e+3)
-		if err != nil {
-			t.Error(err)
-		}
-		err = CheckFloat(zone, 55.88)
-		if err != nil {
-			t.Error(err)
-		}
+		assert.Nil(t, err)
+		assert.InDelta(t, 55.883, zone, allowedError)
+	})
 
+	t.Run("Can calculate Fresnel-Kirchoff diffraction parameter", func(t *testing.T) {
+		f, d1, d2, h := 900*MHz, 8*Km, 12*Km, -0.334*M
+
+		v, err := CalculateFresnelKirckoffDiffractionParam(f, d1, d2, h)
+		assert.Nil(t, err)
+		assert.InDelta(t, -0.012, v, 0.0002)
+	})
+
+	t.Run("Can calculate Fresnel-Kirchoff loss approximate", func(t *testing.T) {
+		v := -0.012
+
+		loss, err := CalculateFresnelKirchoffLossApprox(v)
+		assert.Nil(t, err)
+		assert.InDelta(t, 5.93, float64(loss), allowedError)
 	})
 
 }
