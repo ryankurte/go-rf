@@ -46,19 +46,19 @@ func TestRFUtils(t *testing.T) {
 
 		// Test against precalculated results
 
-		dBLoss := FreeSpaceAttenuation(2.4*GHz, 1e+0)
+		dBLoss := CalculateFreeSpacePathLoss(2.4*GHz, 1e+0)
 		assert.InDelta(t, 40.05, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuation(2.4*GHz, 1e+3)
+		dBLoss = CalculateFreeSpacePathLoss(2.4*GHz, 1e+3)
 		assert.InDelta(t, 100.05, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuation(2.4*GHz, 1e+6)
+		dBLoss = CalculateFreeSpacePathLoss(2.4*GHz, 1e+6)
 		assert.InDelta(t, 160.05, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuation(433*MHz, 1e+3)
+		dBLoss = CalculateFreeSpacePathLoss(433*MHz, 1e+3)
 		assert.InDelta(t, 85.178, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuation(433*MHz, 1e+6)
+		dBLoss = CalculateFreeSpacePathLoss(433*MHz, 1e+6)
 		assert.InDelta(t, 145.178, float64(dBLoss), allowedError)
 	})
 

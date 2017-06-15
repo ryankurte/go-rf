@@ -70,8 +70,8 @@ const (
 // Free Space Path Loss (FSPL) calculations
 // https://en.wikipedia.org/wiki/Free-space_path_loss#Free-space_path_loss_formula
 
-// FreeSpaceAttenuation calculates the Free Space Path Loss for a given frequency and distance in Decibels
-func FreeSpaceAttenuation(freq Frequency, distance Distance) Attenuation {
+// CalculateFreeSpacePathLoss calculates the Free Space Path Loss in Decibels for a given frequency and distance
+func CalculateFreeSpacePathLoss(freq Frequency, distance Distance) Attenuation {
 	fading := 20 * math.Log10((4 * math.Pi * float64(distance) * float64(freq) / C))
 	return Attenuation(fading)
 }
