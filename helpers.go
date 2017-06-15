@@ -17,6 +17,7 @@ func WavelengthToFrequency(wavelength Wavelength) Frequency {
 }
 
 // Power Decibel helpers
+// See https://en.wikipedia.org/wiki/Decibel#Power_quantities
 
 // DecibelMilliVoltToMilliWatt converts dBm to mW
 // Note that this power decibels (10log10)
@@ -73,6 +74,6 @@ func (a *Attenuation) FieldDBToAbs() float64 {
 }
 
 // FieldAbsToDB Converts an absolute field attenuation (20log10) to decibels
-func FieldAbsToDB(abs float64) float64 {
-	return 20 * math.Log10(abs)
+func FieldAbsToDB(abs float64) Attenuation {
+	return Attenuation(20 * math.Log10(abs))
 }

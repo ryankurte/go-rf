@@ -3,6 +3,7 @@
  *
  * Note that attenuation is a field quantity and thus Decibels (dB) are defined as 20log10
  * rather than the common 10log10 used for power measurements
+ * See: https://en.wikipedia.org/wiki/Decibel#Field_quantities_and_root-power_quantities
  *
  * More Reading:
  * https://en.wikipedia.org/wiki/Path_loss
