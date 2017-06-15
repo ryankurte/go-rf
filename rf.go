@@ -108,10 +108,10 @@ func FresnelFirstZoneMax(freq Frequency, dist Distance) (float64, error) {
 }
 
 // CalculateFresnelKirckoffDiffractionParam Calculates the Fresnel-Kirchoff Diffraction parameter
-// https://en.wikipedia.org/wiki/Kirchhoff%27s_diffraction_formula
-// https://s.campbellsci.com/documents/au/technical-papers/line-of-sight-obstruction.pdf
 // d1 and d2 are the distances between the "knife edge" impingement and the transmitter/receiver
 // h is the impingement, where -ve is below LoS and +ve is above LoS
+// https://en.wikipedia.org/wiki/Kirchhoff%27s_diffraction_formula
+// https://s.campbellsci.com/documents/au/technical-papers/line-of-sight-obstruction.pdf
 func CalculateFresnelKirckoffDiffractionParam(freq Frequency, d1, d2, h Distance) (float64, error) {
 	wavelength := FrequencyToWavelength(freq)
 	v := float64(h) * math.Sqrt((2*float64(d1+d2))/(float64(wavelength)*float64(d1*d2)))
