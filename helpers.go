@@ -7,21 +7,25 @@ import (
 // Basic RF calculations
 
 // FrequencyToWavelength calculates a wavelength from a frequency
-func FrequencyToWavelength(freq Frequency) float64 {
-	return float64(C / freq)
+func FrequencyToWavelength(freq Frequency) Wavelength {
+	return Wavelength(C / freq)
 }
 
 // WavelengthToFrequency calculates a frequency from a wavelength
-func WavelengthToFrequency(wavelength float64) Frequency {
+func WavelengthToFrequency(wavelength Wavelength) Frequency {
 	return Frequency(C / wavelength)
 }
 
+// Power Decibel helpers
+
 // DecibelMilliVoltToMilliWatt converts dBm to mW
+// Note that this power decibels (10log10)
 func DecibelMilliVoltToMilliWatt(dbm float64) float64 {
 	return math.Pow(10, dbm/10)
 }
 
 // MilliWattToDecibelMilliVolt converts mW to dBm
+// Note that this power decibels (10log10)
 func MilliWattToDecibelMilliVolt(mw float64) float64 {
 	return 10 * math.Log10(mw)
 }
@@ -61,4 +65,14 @@ func CalculateDistanceLOS(lat1, lng1, alt1, lat2, lng2, alt2 float64) Distance {
 	los := math.Sqrt(math.Pow(float64(d), 2) + math.Pow(Δh, 2))
 
 	return Distance(los)
+}
+
+// FieldDBToAbs Converts field attenuation (20log10) to absolute values
+func (a *Attenuation) FieldDBToAbs() float64 {
+	return math.Pow(10, float64(*a)/20)
+}
+
+// FieldAbsToDB Converts an absolute field attenuation (20log10) to decibels
+func FieldAbsToDB(abs float64) float64 {
+	return 20 * math.Log10(abs)
 }

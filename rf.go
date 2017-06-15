@@ -1,6 +1,8 @@
 /*
  * Radio Frequency calculations
  *
+ * Note that attenuation is a field quantity and thus Decibels (dB) are defined as 20log10
+ * rather than the common 10log10 used for power measurements
  *
  * More Reading:
  * https://en.wikipedia.org/wiki/Path_loss
@@ -22,6 +24,9 @@ import (
 
 // Frequency type (Hz) to assist with unit coherence
 type Frequency float64
+
+// Wavelength type (m) to assist with unit coherence
+type Wavelength float64
 
 // Distance type (m) to assist with unit coherence
 type Distance float64
@@ -64,14 +69,10 @@ const (
 // Free Space Path Loss (FSPL) calculations
 // https://en.wikipedia.org/wiki/Free-space_path_loss#Free-space_path_loss_formula
 
-// FreeSpaceAttenuation calculates the Free Space Path Loss for a given frequency and distance
-func FreeSpaceAttenuation(freq Frequency, distance Distance) float64 {
-	return math.Pow((4 * math.Pi * float64(distance) * float64(freq) / C), 2)
-}
-
-// FreeSpaceAttenuationDB calculates the Free Space Path Loss for a given frequency and distance in Decibels
-func FreeSpaceAttenuationDB(freq Frequency, distance Distance) float64 {
-	return 20 * math.Log10((4 * math.Pi * float64(distance) * float64(freq) / C))
+// FreeSpaceAttenuation calculates the Free Space Path Loss for a given frequency and distance in Decibels
+func FreeSpaceAttenuation(freq Frequency, distance Distance) Attenuation {
+	fading := 20 * math.Log10((4 * math.Pi * float64(distance) * float64(freq) / C))
+	return Attenuation(fading)
 }
 
 // Freznel zone calculations
@@ -87,18 +88,18 @@ const FresnelMinDistanceWavelengthRadio = 0.1
 func FresnelPoint(d1, d2 Distance, freq Frequency, order int64) (float64, error) {
 	wavelength := FrequencyToWavelength(freq)
 
-	if ((float64(d1) * FresnelMinDistanceWavelengthRadio) < wavelength) || ((float64(d2) * FresnelMinDistanceWavelengthRadio) < wavelength) {
+	if ((float64(d1) * FresnelMinDistanceWavelengthRadio) < float64(wavelength)) || ((float64(d2) * FresnelMinDistanceWavelengthRadio) < float64(wavelength)) {
 		return 0, fmt.Errorf("Fresnel calculation valid only for distances >> wavelength (d1: %.2fm d2: %.2fm wavelength %.2fm)", d1, d2, wavelength)
 	}
 
-	return math.Sqrt((float64(order) * wavelength * float64(d1) * float64(d2)) / (float64(d1) + float64(d2))), nil
+	return math.Sqrt((float64(order) * float64(wavelength) * float64(d1) * float64(d2)) / (float64(d1) + float64(d2))), nil
 }
 
 // FresnelFirstZoneMax calculates the maximum fresnel zone radius for a given frequency
 func FresnelFirstZoneMax(freq Frequency, dist Distance) (float64, error) {
 
 	wavelength := FrequencyToWavelength(freq)
-	if (float64(dist) * FresnelMinDistanceWavelengthRadio) < wavelength {
+	if (float64(dist) * FresnelMinDistanceWavelengthRadio) < float64(wavelength) {
 		return 0, fmt.Errorf("Fresnel calculation valid only for distance >> wavelength (distance: %.2fm wavelength %.2fm)", dist, wavelength)
 	}
 
@@ -136,7 +137,7 @@ const (
 
 // CalculateFoliageLoss calculates path loss in dB due to foliage based on the Weissberger model
 // https://en.wikipedia.org/wiki/Weissberger%27s_model
-func CalculateFoliageLoss(freq Frequency, depth Distance) (float64, error) {
+func CalculateFoliageLoss(freq Frequency, depth Distance) (Attenuation, error) {
 	if freq < WeissbergerMinFreq || freq > WeissbergerMaxFreq {
 		return 0, fmt.Errorf("Frequency %.2f is not between 230MHz and 95GHz as required by the Weissberger model", freq)
 	}
@@ -152,26 +153,26 @@ func CalculateFoliageLoss(freq Frequency, depth Distance) (float64, error) {
 		fading = 1.33 * math.Pow(float64(freq), 0.284) * math.Pow(float64(depth), 0.588)
 	}
 
-	return fading, nil
+	return Attenuation(fading), nil
 }
 
 // CalculateRaleighFading calculates Raleigh fading
 // https://en.wikipedia.org/wiki/Rayleigh_fading
-func CalculateRaleighFading(freq Frequency) (float64, error) {
+func CalculateRaleighFading(freq Frequency) (Attenuation, error) {
 	log.Panicf("Raleigh fading not yet implemented")
 	return 0.0, nil
 }
 
 // CalculateRicanFading calculates Rican fading
 // https://en.wikipedia.org/wiki/Rician_fading
-func CalculateRicanFading(freq Frequency) (float64, error) {
+func CalculateRicanFading(freq Frequency) (Attenuation, error) {
 	log.Panicf("Rican fading not yet implemented")
 	return 0.0, nil
 }
 
 // CalculateWeibullFading calculates Weibull fading
 // https://en.wikipedia.org/wiki/Weibull_fading
-func CalculateWeibullFading(freq Frequency) (float64, error) {
+func CalculateWeibullFading(freq Frequency) (Attenuation, error) {
 	log.Panicf("Weibull fading not yet implemented")
 	return 0.0, nil
 }

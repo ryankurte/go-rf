@@ -46,20 +46,20 @@ func TestRFUtils(t *testing.T) {
 
 		// Test against precalculated results
 
-		dBLoss := FreeSpaceAttenuationDB(2.4*GHz, 1e+0)
-		assert.InDelta(t, 40.05, dBLoss, allowedError)
+		dBLoss := FreeSpaceAttenuation(2.4*GHz, 1e+0)
+		assert.InDelta(t, 40.05, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuationDB(2.4*GHz, 1e+3)
-		assert.InDelta(t, 100.05, dBLoss, allowedError)
+		dBLoss = FreeSpaceAttenuation(2.4*GHz, 1e+3)
+		assert.InDelta(t, 100.05, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuationDB(2.4*GHz, 1e+6)
-		assert.InDelta(t, 160.05, dBLoss, allowedError)
+		dBLoss = FreeSpaceAttenuation(2.4*GHz, 1e+6)
+		assert.InDelta(t, 160.05, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuationDB(433*MHz, 1e+3)
-		assert.InDelta(t, 85.178, dBLoss, allowedError)
+		dBLoss = FreeSpaceAttenuation(433*MHz, 1e+3)
+		assert.InDelta(t, 85.178, float64(dBLoss), allowedError)
 
-		dBLoss = FreeSpaceAttenuationDB(433*MHz, 1e+6)
-		assert.InDelta(t, 145.178, dBLoss, allowedError)
+		dBLoss = FreeSpaceAttenuation(433*MHz, 1e+6)
+		assert.InDelta(t, 145.178, float64(dBLoss), allowedError)
 	})
 
 	t.Run("Can calculate the distance between two lat/lon locations", func(t *testing.T) {
