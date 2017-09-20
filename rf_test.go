@@ -99,4 +99,27 @@ func TestRFUtils(t *testing.T) {
 		assert.InDelta(t, 5.93, float64(loss), allowedError)
 	})
 
+	t.Run("Normalises terrain paths for Fresnel-Kirchoff method", func(t *testing.T) {
+		h, d := TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 0.0, 0.0, 0.0, 0.0})
+		assert.InDelta(t, -1.0, h, allowedError)
+		assert.InDelta(t, 1.0, d, allowedError)
+
+		h, d = TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 0.5, 0.0, 0.0, 0.0})
+		assert.InDelta(t, -0.5, h, allowedError)
+		assert.InDelta(t, 0.5, d, allowedError)
+
+		h, d = TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 1.0, 1.0, 0.0, 0.0})
+		assert.InDelta(t, 0.0, h, allowedError)
+		assert.InDelta(t, 0.75, d, allowedError)
+
+		h, d = TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 0.0, 1.5, 1.5, 0.0})
+		assert.InDelta(t, 0.5, h, allowedError)
+		assert.InDelta(t, 1.25, d, allowedError)
+
+		h, d = TerrainToFresnelKirchoff(2.0, 1.0, 2.0, []float64{0.0, 0.0, 1.0, 0.0, 0.0})
+		assert.InDelta(t, -0.4436, h, allowedError)
+		assert.InDelta(t, 1.0, d, allowedError)
+
+	})
+
 }

@@ -1,6 +1,7 @@
 package rf
 
 import (
+	"fmt"
 	"math"
 )
 
@@ -76,4 +77,44 @@ func (a *Attenuation) FieldDBToAbs() float64 {
 // FieldAbsToDB Converts an absolute field attenuation (20log10) to decibels
 func FieldAbsToDB(abs float64) Attenuation {
 	return Attenuation(20 * math.Log10(abs))
+}
+
+func TerrainToFresnelKirchoff(p1, p2 float64, d Distance, terrain []float64) (highestImpingement, distanceToImpingement float64) {
+	height := (p2 - p1)
+	θ := math.Sin(height / float64(d))
+	dist := math.Cos(θ) * float64(d)
+
+	Δh := height / float64(len(terrain)-1)
+	Δd := dist / float64(len(terrain)-1)
+
+	diffs := make([]float64, len(terrain))
+
+	fmt.Printf("height: %.4f dist: %.4f θ: %.4f Δh: %.4f Δd: %.4f\n", height, dist, θ, Δh, Δd)
+
+	for i, v := range terrain {
+		h := p1 + float64(i)*Δh
+		d := v - h
+		nh := math.Cos(θ) * d
+
+		fmt.Printf("Slice %d dist: %.4f height: %.4f terrain: %.4f diff: %.4f normalised: %.4f\n", i, float64(i)*Δd, h, v, d, nh)
+
+		diffs[i] = nh
+	}
+
+	fmt.Printf("Diffs: %+v\n", diffs)
+
+	highestIndex := 0
+	count := 0
+	for i, v := range diffs {
+		if v > highestImpingement || i == 0 {
+			highestImpingement = v
+			highestIndex = i
+			count = 0
+		} else if v == highestImpingement {
+			count++
+		}
+	}
+	distanceToImpingement = (float64(highestIndex) + float64(count)/2) * Δd / math.Cos(θ)
+
+	return highestImpingement, distanceToImpingement
 }

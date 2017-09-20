@@ -123,7 +123,7 @@ func CalculateFresnelKirckoffDiffractionParam(freq Frequency, d1, d2, h Distance
 // https://s.campbellsci.com/documents/au/technical-papers/line-of-sight-obstruction.pdf
 func CalculateFresnelKirchoffLossApprox(v float64) (Attenuation, error) {
 	if !(v >= -0.7) {
-		return 0.0, fmt.Errorf("Fresnel-Kirchoff loss approximation only valid for v >= -0.7")
+		return 0.0, fmt.Errorf("Fresnel-Kirchoff loss approximation only valid for v >= -0.7 (v: %.6f)", v)
 	}
 	loss := 6.9 + 20*math.Log10(math.Sqrt(math.Pow(v-0.1, 2)+1)+v-0.1)
 	return Attenuation(loss), nil
