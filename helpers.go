@@ -119,20 +119,20 @@ func TerrainToPathXY(p1, p2 float64, d Distance, terrain []float64) (x, y []floa
 	fmt.Printf("TXY height: %.4f dist: %.4f θ: %.4f Δh: %.4f Δd: %.4f\n", height, d, θ, Δh, Δd)
 
 	for i, terrainHeight := range terrain {
-		referenceHeight := p1 + float64(i)*Δh
-		referenceDist := Δd * float64(i)
+		offsetHeight := float64(i) * Δh
+		offsetDist := Δd * float64(i)
 
-		verticalClearance := referenceHeight - terrainHeight
+		verticalClearance := offsetHeight + p1 - terrainHeight
 
 		transformedX := math.Sin(θ) * verticalClearance
 		transformedY := math.Cos(θ) * verticalClearance
 
-		shiftX := referenceDist / math.Cos(θ)
+		shiftX := offsetDist / math.Cos(θ)
 
 		x[i], y[i] = shiftX-transformedX, transformedY
 
-		fmt.Printf("Point: %d terrain: %.2f ph: %.2f pd: %.2f clearance: %.2f sx: %.2f tx: %.2f ty: %.2f x: %.2f y: %.2f\n",
-			i, terrainHeight, referenceHeight, referenceDist, verticalClearance, shiftX, transformedX, transformedY, x[i], y[i])
+		fmt.Printf("Point: %d terrain: %.2f oh: %.2f od: %.2f clearance: %.2f sx: %.2f tx: %.2f ty: %.2f x: %.2f y: %.2f\n",
+			i, terrainHeight, offsetHeight, offsetDist, verticalClearance, shiftX, transformedX, transformedY, x[i], y[i])
 
 	}
 

@@ -99,40 +99,61 @@ func TestRFUtils(t *testing.T) {
 		assert.InDelta(t, 5.93, float64(loss), allowedError)
 	})
 
+	type NormalisationTest struct {
+		name         string
+		p1, p2, d, l float64
+		t            []float64
+		x            []float64
+		y            []float64
+	}
+
 	t.Run("Normalises terrain paths against slope", func(t *testing.T) {
-		p1, p2, d, tr := 0.0, 3.0, Distance(4.0), []float64{0.0, 0.0, 0.0}
-		x, y, d2 := TerrainToPathXY(p1, p2, d, tr)
+		tests := []NormalisationTest{
+			{
+				"Slope up from L->R",
+				0.0, 3.0, 4.0, 5.0,
+				[]float64{0.0, 0.0, 0.0},
+				[]float64{0.0, 1.6, 3.2},
+				[]float64{0.0, 1.2, 2.4},
+			}, {
+				"Slope down from L->R",
+				3.0, 0.0, 4.0, 5.0,
+				[]float64{0.0, 0.0, 0.0},
+				[]float64{1.8, 3.4, 5.0},
+				[]float64{2.4, 1.2, 0.0},
+			}, {
+				"Slope up from L->R with positive offset",
+				1.0, 4.0, 4.0, 5.0,
+				[]float64{0.0, 0.0, 0.0},
+				[]float64{-0.6, 1.0, 2.6},
+				[]float64{0.8, 2.0, 3.2},
+			}, {
+				"Slope up from L->R with positive terrain",
+				0.0, 3.0, 4.0, 5.0,
+				[]float64{1.0, 1.0, 1.0},
+				[]float64{0.6, 2.2, 3.8},
+				[]float64{-0.8, 0.4, 1.6},
+			}, {
+				"Slope up from L->R with positive offset and terrain",
+				1.0, 4.0, 4.0, 5.0,
+				[]float64{1.0, 1.0, 1.0},
+				[]float64{0.0, 1.6, 3.2},
+				[]float64{0.0, 1.2, 2.4},
+			},
+		}
 
-		fmt.Printf("X: %+v Y: %+v\n", x, y)
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				x, y, l := TerrainToPathXY(test.p1, test.p2, Distance(test.d), test.t)
 
-		assert.InDelta(t, 5.0, d2, allowedError)
+				assert.InDelta(t, test.l, l, allowedError)
 
-		assert.InDelta(t, 0.0, x[0], allowedError)
-		assert.InDelta(t, 0.0, y[0], allowedError)
-
-		assert.InDelta(t, 1.6, x[1], allowedError)
-		assert.InDelta(t, 1.2, y[1], allowedError)
-
-		assert.InDelta(t, 3.2, x[2], allowedError)
-		assert.InDelta(t, 2.4, y[2], allowedError)
-	})
-
-	t.Run("Normalises terrain paths against slope2", func(t *testing.T) {
-		p1, p2, d, tr := 3.0, 0.0, Distance(4.0), []float64{0.0, 0.0, 0.0}
-		x, y, d2 := TerrainToPathXY(p1, p2, d, tr)
-
-		fmt.Printf("X: %+v Y: %+v\n", x, y)
-
-		assert.InDelta(t, 5.0, d2, allowedError)
-
-		assert.InDelta(t, 1.8, x[0], allowedError)
-		assert.InDelta(t, 2.4, y[0], allowedError)
-
-		assert.InDelta(t, 3.4, x[1], allowedError)
-		assert.InDelta(t, 1.2, y[1], allowedError)
-
-		assert.InDelta(t, 5.0, x[2], allowedError)
-		assert.InDelta(t, 0.0, y[2], allowedError)
+				for i := range test.t {
+					assert.InDelta(t, test.x[i], x[i], allowedError, "index %d", i)
+					assert.InDelta(t, test.y[i], y[i], allowedError, "index %d", i)
+				}
+			})
+		}
 	})
 
 	t.Run("Normalises terrain paths for Fresnel-Kirchoff method", func(t *testing.T) {
