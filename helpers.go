@@ -116,8 +116,6 @@ func TerrainToPathXY(p1, p2 float64, d Distance, terrain []float64) (x, y []floa
 	x = make([]float64, len(terrain))
 	y = make([]float64, len(terrain))
 
-	fmt.Printf("TXY height: %.4f dist: %.4f θ: %.4f Δh: %.4f Δd: %.4f\n", height, d, θ, Δh, Δd)
-
 	for i, terrainHeight := range terrain {
 		offsetHeight := float64(i) * Δh
 		offsetDist := Δd * float64(i)
@@ -131,37 +129,9 @@ func TerrainToPathXY(p1, p2 float64, d Distance, terrain []float64) (x, y []floa
 
 		x[i], y[i] = shiftX-transformedX, transformedY
 
-		fmt.Printf("Point: %d terrain: %.2f oh: %.2f od: %.2f clearance: %.2f sx: %.2f tx: %.2f ty: %.2f x: %.2f y: %.2f\n",
-			i, terrainHeight, offsetHeight, offsetDist, verticalClearance, shiftX, transformedX, transformedY, x[i], y[i])
-
 	}
 
 	d2 = math.Sqrt(math.Pow(height, 2) + math.Pow(float64(d), 2))
 
 	return x, y, d2
-}
-
-func TerrainToFresnelKirchoff(p1, p2 float64, d Distance, terrain []float64) (highestImpingement, distanceToImpingement float64) {
-	Δd, _, θ, diffs := TerrainToPath(p1, p2, d, terrain)
-
-	highestIndex := 0
-	count := 0
-	for i, v := range diffs {
-		if v > highestImpingement || i == 0 {
-			highestImpingement = v
-			highestIndex = i
-			count = 0
-		} else if v == highestImpingement {
-			count++
-		}
-	}
-	distanceToImpingement = (float64(highestIndex) + float64(count)/2) * Δd / math.Cos(θ)
-
-	return highestImpingement, distanceToImpingement
-}
-
-func BullingtonMethod(p1, p2 float64, d Distance, terrain []float64) (highestImpingement, distanceToImpingement float64) {
-	//x, y := TerrainToPathXY(p1, p2, d, terrain)
-
-	return highestImpingement, distanceToImpingement
 }

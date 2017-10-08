@@ -99,16 +99,14 @@ func TestRFUtils(t *testing.T) {
 		assert.InDelta(t, 5.93, float64(loss), allowedError)
 	})
 
-	type NormalisationTest struct {
-		name         string
-		p1, p2, d, l float64
-		t            []float64
-		x            []float64
-		y            []float64
-	}
-
 	t.Run("Normalises terrain paths against slope", func(t *testing.T) {
-		tests := []NormalisationTest{
+		tests := []struct {
+			name         string
+			p1, p2, d, l float64
+			t            []float64
+			x            []float64
+			y            []float64
+		}{
 			{
 				"Slope up from L->R",
 				0.0, 3.0, 4.0, 5.0,
@@ -156,26 +154,82 @@ func TestRFUtils(t *testing.T) {
 		}
 	})
 
-	t.Run("Normalises terrain paths for Fresnel-Kirchoff method", func(t *testing.T) {
-		h, d := TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 0.0, 0.0, 0.0, 0.0})
-		assert.InDelta(t, -1.0, h, allowedError)
-		assert.InDelta(t, 1.0, d, allowedError)
+	t.Run("Bullington method (Figure 12) angle calculation", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			x, y   []float64
+			d      float64
+			θ1, θ2 float64
+		}{
+			{
+				"Zero impingement",
+				[]float64{0.0, 2.5, 5.0},
+				[]float64{0.0, 0.0, 0.0},
+				5, 0.0, 0.0,
+			}, {
+				"Positive center impingement",
+				[]float64{0.0, 2.5, 5.0},
+				[]float64{0.0, 1.5, 0.0},
+				5, 0.54, 0.54,
+			}, {
+				"Negative center impingement",
+				[]float64{0.0, 2.5, 5.0},
+				[]float64{0.0, -1.5, 0.0},
+				5, -0.54, -0.54,
+			}, {
+				"Positive impinging pair",
+				[]float64{0.0, 1.0, 2.0, 3.0, 4.0},
+				[]float64{0.0, 1.0, 0.0, 1.0, 0.0},
+				4, math.Pi / 4, math.Pi / 4,
+			}, {
+				"Negative impinging pair",
+				[]float64{0.0, 1.0, 2.0, 3.0, 4.0},
+				[]float64{0.0, -1.0, -4.0, -1.0, 0.0},
+				4, math.Atan2(-1, 3), math.Atan2(-1, 3),
+			},
+		}
 
-		h, d = TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 0.5, 0.0, 0.0, 0.0})
-		assert.InDelta(t, -0.5, h, allowedError)
-		assert.InDelta(t, 0.5, d, allowedError)
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				θ1, θ2 := findBullingtonFigure12Angles(test.x, test.y, test.d)
+				assert.InDelta(t, test.θ1, θ1, allowedError)
+				assert.InDelta(t, test.θ2, θ2, allowedError)
+			})
+		}
+	})
 
-		h, d = TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 1.0, 1.0, 0.0, 0.0})
-		assert.InDelta(t, 0.0, h, allowedError)
-		assert.InDelta(t, 0.75, d, allowedError)
+	t.Run("Bullington method (figure 12) angles to distance", func(t *testing.T) {
+		tests := []struct {
+			name      string
+			θ1, θ2, l float64
+			h, d      float64
+		}{
+			{
+				"Positive and equal angles",
+				math.Pi / 4, math.Pi / 4, 10,
+				5, 5,
+			}, {
+				"Negative and equal angles",
+				-math.Pi / 4, -math.Pi / 4, 10,
+				-5, 5,
+			}, {
+				"Positive and left skewed",
+				math.Pi / 3, math.Pi / 6, 10,
+				10 * math.Sin(math.Pi/3) * math.Sin(math.Pi/6), 10 * math.Sin(math.Pi/6) * math.Cos(math.Pi/3),
+			}, {
+				"Positive and right skewed",
+				math.Pi / 6, math.Pi / 3, 10,
+				10 * math.Sin(math.Pi/6) * math.Sin(math.Pi/3), 10 * math.Sin(math.Pi/3) * math.Cos(math.Pi/6),
+			},
+		}
 
-		h, d = TerrainToFresnelKirchoff(1.0, 1.0, 2.0, []float64{0.0, 0.0, 1.5, 1.5, 0.0})
-		assert.InDelta(t, 0.5, h, allowedError)
-		assert.InDelta(t, 1.25, d, allowedError)
-
-		h, d = TerrainToFresnelKirchoff(2.0, 1.0, 2.0, []float64{0.0, 0.0, 1.0, 0.0, 0.0})
-		assert.InDelta(t, -0.4436, h, allowedError)
-		assert.InDelta(t, 1.0, d, allowedError)
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				h, d := solveBullingtonFigureTwelveDist(test.θ1, test.θ2, test.l)
+				assert.InDelta(t, test.h, h, allowedError)
+				assert.InDelta(t, test.d, d, allowedError)
+			})
+		}
 
 	})
 
