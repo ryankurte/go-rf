@@ -112,31 +112,31 @@ func TestRFUtils(t *testing.T) {
 				0.0, 3.0, 4.0, 5.0,
 				[]float64{0.0, 0.0, 0.0},
 				[]float64{0.0, 1.6, 3.2},
-				[]float64{0.0, 1.2, 2.4},
+				[]float64{0.0, -1.2, -2.4},
 			}, {
 				"Slope down from L->R",
 				3.0, 0.0, 4.0, 5.0,
 				[]float64{0.0, 0.0, 0.0},
 				[]float64{1.8, 3.4, 5.0},
-				[]float64{2.4, 1.2, 0.0},
+				[]float64{-2.4, -1.2, 0.0},
 			}, {
 				"Slope up from L->R with positive offset",
 				1.0, 4.0, 4.0, 5.0,
 				[]float64{0.0, 0.0, 0.0},
 				[]float64{-0.6, 1.0, 2.6},
-				[]float64{0.8, 2.0, 3.2},
+				[]float64{-0.8, -2.0, -3.2},
 			}, {
 				"Slope up from L->R with positive terrain",
 				0.0, 3.0, 4.0, 5.0,
 				[]float64{1.0, 1.0, 1.0},
 				[]float64{0.6, 2.2, 3.8},
-				[]float64{-0.8, 0.4, 1.6},
+				[]float64{0.8, -0.4, -1.6},
 			}, {
 				"Slope up from L->R with positive offset and terrain",
 				1.0, 4.0, 4.0, 5.0,
 				[]float64{1.0, 1.0, 1.0},
 				[]float64{0.0, 1.6, 3.2},
-				[]float64{0.0, 1.2, 2.4},
+				[]float64{0.0, -1.2, -2.4},
 			},
 		}
 
@@ -225,12 +225,55 @@ func TestRFUtils(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				h, d := solveBullingtonFigureTwelveDist(test.θ1, test.θ2, test.l)
+				d, h := solveBullingtonFigureTwelveDist(test.θ1, test.θ2, test.l)
 				assert.InDelta(t, test.h, h, allowedError)
 				assert.InDelta(t, test.d, d, allowedError)
 			})
 		}
+	})
 
+	t.Run("Reverts dist/height to x/y", func(t *testing.T) {
+		tests := []struct {
+			name         string
+			p1, p2, d    float64
+			dist, height float64
+			x, y         float64
+		}{
+			{
+				"Zero path height",
+				0.0, 0.0, 4.0,
+				2.0, 1.0,
+				2.0, 1.0,
+			}, {
+				"Constant path height",
+				1.0, 1.0, 4.0,
+				2.0, 1.0,
+				2.0, 2.0,
+			}, {
+				"Angled path with no offset ",
+				0.0, 3.0, 4.0,
+				2.5, 0.0,
+				2.0, 1.5,
+			}, {
+				"Angled path with offset ",
+				0.0, 3.0, 4.0,
+				2.5, 1.0,
+				1.4, 2.3,
+			}, {
+				"Reverse angled path with offset ",
+				3.0, 0.0, 4.0,
+				2.5, 1.0,
+				2.6, 2.3,
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				x, y := UnNormalisePoint(test.p1, test.p2, Distance(test.d), test.dist, test.height)
+				assert.InDelta(t, test.x, x, allowedError, "X")
+				assert.InDelta(t, test.y, y, allowedError, "Y")
+			})
+		}
 	})
 
 }

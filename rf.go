@@ -181,14 +181,14 @@ func CalculateWeibullFading(freq Frequency) (Attenuation, error) {
 // BullingtonFigure12Method implements the Bullington Figure 12 (intersecting horizons) method to approximate
 // height and distance for use in the Fresnell-Kirchoff path loss approximation.
 // See: https://hams.soe.ucsc.edu/sites/default/files/Bullington%20VTS%201977.pdf
-func BullingtonFigure12Method(p1, p2 float64, d Distance, terrain []float64) (height, dist float64) {
+func BullingtonFigure12Method(p1, p2 float64, d Distance, terrain []float64) (dist, height float64) {
 	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
 
 	θ1, θ2 := findBullingtonFigure12Angles(x, y, l)
 
-	height, dist = solveBullingtonFigureTwelveDist(θ1, θ2, l)
+	dist, height = solveBullingtonFigureTwelveDist(θ1, θ2, l)
 
-	return height, dist
+	return dist, height
 }
 
 func findBullingtonFigure12Angles(x, y []float64, d float64) (θ1, θ2 float64) {
@@ -211,7 +211,7 @@ func findBullingtonFigure12Angles(x, y []float64, d float64) (θ1, θ2 float64) 
 	return maxθ1, maxθ2
 }
 
-func solveBullingtonFigureTwelveDist(θb, θc, l float64) (height, dist float64) {
+func solveBullingtonFigureTwelveDist(θb, θc, l float64) (dist, height float64) {
 	θa := math.Pi - θb - θc
 
 	r := l / math.Sin(θa)
@@ -220,5 +220,5 @@ func solveBullingtonFigureTwelveDist(θb, θc, l float64) (height, dist float64)
 	height = math.Sin(θb) * C
 	dist = math.Cos(θb) * C
 
-	return height, dist
+	return dist, height
 }

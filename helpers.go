@@ -1,8 +1,12 @@
 package rf
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"math"
+
+	"github.com/wcharczuk/go-chart"
 )
 
 // Basic RF calculations
@@ -79,6 +83,25 @@ func FieldAbsToDB(abs float64) Attenuation {
 	return Attenuation(20 * math.Log10(abs))
 }
 
+func Smooth(data []float64) []float64 {
+	smoothed := make([]float64, len(data)/2)
+	for i := range smoothed {
+		if len(smoothed) >= i*2+1 {
+			smoothed[i] = (data[i*2] + data[i*2+1]) / 2
+		} else {
+			smoothed[i] = data[i*2]
+		}
+	}
+	return smoothed
+}
+
+func SmoothN(n int, data []float64) []float64 {
+	for i := 0; i < n; i++ {
+		data = Smooth(data)
+	}
+	return data
+}
+
 // Convert terrain between two points of set heights into distances from the path between those points
 func TerrainToPath(p1, p2 float64, d Distance, terrain []float64) (Δd, Δh, θ float64, diffs []float64) {
 	height := (p2 - p1)
@@ -109,6 +132,7 @@ func TerrainToPath(p1, p2 float64, d Distance, terrain []float64) (Δd, Δh, θ 
 func TerrainToPathXY(p1, p2 float64, d Distance, terrain []float64) (x, y []float64, d2 float64) {
 	height := (p2 - p1)
 	θ := math.Atan2(height, float64(d))
+	d2 = math.Sqrt(math.Pow(float64(d), 2) + math.Pow(height, 2))
 
 	Δh := height / float64(len(terrain)-1)
 	Δd := float64(d) / float64(len(terrain)-1)
@@ -127,11 +151,108 @@ func TerrainToPathXY(p1, p2 float64, d Distance, terrain []float64) (x, y []floa
 
 		shiftX := offsetDist / math.Cos(θ)
 
-		x[i], y[i] = shiftX-transformedX, transformedY
-
+		x[i], y[i] = shiftX-transformedX, -transformedY
 	}
 
-	d2 = math.Sqrt(math.Pow(height, 2) + math.Pow(float64(d), 2))
-
 	return x, y, d2
+}
+
+//UnNormalisePoint reverts a normalised (straight line between p1 and p2) point to a real world point
+func UnNormalisePoint(p1, p2 float64, d Distance, x, y float64) (float64, float64) {
+	height := (p2 - p1)
+	θ := math.Atan2(height, float64(d))
+
+	fmt.Printf("p1: %.2f, p2: %.2f, h: %.2f, θ: %.2f\n", p1, p2, height, θ)
+
+	x1 := math.Cos(θ) * x
+	y1 := math.Sin(θ) * x
+
+	x2 := math.Sin(θ) * y
+	y2 := math.Cos(θ) * y
+
+	x3 := x1 - x2
+	y3 := y1 + y2 + p1
+
+	return x3, y3
+}
+
+// GraphBullingtonFigure12 Graphs the terrain impingement calculated using the Bullington Figure 12 method
+func GraphBullingtonFigure12(filename string, normalised bool, p1, p2 float64, d Distance, terrain []float64) error {
+
+	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
+
+	θ1, θ2 := findBullingtonFigure12Angles(x, y, l)
+
+	dist, height := solveBullingtonFigureTwelveDist(θ1, θ2, l)
+
+	impingementX, impingementY := UnNormalisePoint(p1, p2, d, dist, height)
+
+	terrainX := make([]float64, len(terrain))
+	for i := range terrain {
+		terrainX[i] = float64(d) / float64(len(terrain)) * float64(i)
+	}
+
+	graph := chart.Chart{
+		Width:  1280,
+		Height: 960,
+		DPI:    180,
+		XAxis: chart.XAxis{
+			Name:      "Height",
+			NameStyle: chart.StyleShow(),
+			Style:     chart.StyleShow(),
+		}, YAxis: chart.YAxis{
+			Name:      "Distance",
+			NameStyle: chart.StyleShow(),
+			Style:     chart.StyleShow(),
+		},
+	}
+
+	if !normalised {
+		graph.Series = []chart.Series{
+			chart.ContinuousSeries{
+				XValues: []float64{0, float64(d)},
+				YValues: []float64{p1, p2},
+				Name:    "Line of Sight",
+				Style:   chart.StyleShow(),
+			}, chart.ContinuousSeries{
+				XValues: terrainX,
+				YValues: terrain,
+				Name:    "Terrain",
+				Style:   chart.StyleShow(),
+			}, chart.ContinuousSeries{
+				XValues: []float64{0, impingementX, float64(d)},
+				YValues: []float64{p1, impingementY, p2},
+				Name:    "Equivalent Knife Edge",
+			},
+		}
+	} else {
+		graph.Series = []chart.Series{
+			chart.ContinuousSeries{
+				XValues: []float64{0, l},
+				YValues: []float64{0, 0},
+				Name:    "Line of Sight",
+			}, chart.ContinuousSeries{
+				XValues: x,
+				YValues: y,
+				Name:    "Normalised Terrain",
+			}, chart.ContinuousSeries{
+				XValues: []float64{0, dist, l},
+				YValues: []float64{0, height, 0},
+				Name:    "Equivalent Knife Edge",
+			},
+		}
+	}
+
+	buffer := bytes.NewBuffer([]byte{})
+	err := graph.Render(chart.PNG, buffer)
+	if err != nil {
+		return err
+	}
+
+	err = ioutil.WriteFile(filename, buffer.Bytes(), 0766)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
