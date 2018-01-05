@@ -162,8 +162,6 @@ func UnNormalisePoint(p1, p2 float64, d Distance, x, y float64) (float64, float6
 	height := (p2 - p1)
 	θ := math.Atan2(height, float64(d))
 
-	fmt.Printf("p1: %.2f, p2: %.2f, h: %.2f, θ: %.2f\n", p1, p2, height, θ)
-
 	x1 := math.Cos(θ) * x
 	y1 := math.Sin(θ) * x
 

@@ -44,27 +44,30 @@ const (
 	// FresnelObstructionIdeal is the largest ideal proportion of fresnel zone impingement
 	FresnelObstructionIdeal = 0.2
 
-	// Frequency helper types
-
-	Hz  Frequency = 1
-	KHz           = Hz * 1000
-	MHz           = KHz * 1000
-	GHz           = MHz * 1000
-
-	// Distance helper types
-
-	M  Distance = 1
-	Km          = M * 1000
-
-	// Attenuation helpers
-
-	DB Attenuation = 0
-
 	// R is the (average) radius of the earth
 	R = 6.371e6
 
 	// Pi for use in formulae
 	π = math.Pi
+)
+
+// Frequency helper types
+const (
+	Hz  Frequency = 1.0
+	KHz           = Hz * 1000
+	MHz           = KHz * 1000
+	GHz           = MHz * 1000
+)
+
+// Distance helper types
+const (
+	M  Distance = 1.0
+	Km          = M * 1000
+)
+
+// Attenuation helpers
+const (
+	DB Attenuation = 0
 )
 
 // Free Space Path Loss (FSPL) calculations
@@ -109,13 +112,13 @@ func FresnelFirstZoneMax(freq Frequency, dist Distance) (float64, error) {
 
 // CalculateFresnelKirckoffDiffractionParam Calculates the Fresnel-Kirchoff Diffraction parameter
 // d1 and d2 are the distances between the "knife edge" impingement and the transmitter/receiver
-// h is the impingement, where -ve is below LoS and +ve is above LoS
+// h is the impingement, where -ve is below Line of Sight (LoS) and +ve is above LoS
 // https://en.wikipedia.org/wiki/Kirchhoff%27s_diffraction_formula
 // https://s.campbellsci.com/documents/au/technical-papers/line-of-sight-obstruction.pdf
-func CalculateFresnelKirckoffDiffractionParam(freq Frequency, d1, d2, h Distance) (float64, error) {
+func CalculateFresnelKirckoffDiffractionParam(freq Frequency, d1, d2, h Distance) (v float64, err error) {
 	wavelength := FrequencyToWavelength(freq)
-	v := float64(h) * math.Sqrt((2*float64(d1+d2))/(float64(wavelength)*float64(d1*d2)))
-	return v, nil
+	v = float64(h) * math.Sqrt((2*float64(d1+d2))/(float64(wavelength)*float64(d1*d2)))
+	return v, err
 }
 
 // CalculateFresnelKirchoffLossApprox Calculates approximate loss due to diffraction using
@@ -181,14 +184,15 @@ func CalculateWeibullFading(freq Frequency) (Attenuation, error) {
 // BullingtonFigure12Method implements the Bullington Figure 12 (intersecting horizons) method to approximate
 // height and distance for use in the Fresnell-Kirchoff path loss approximation.
 // See: https://hams.soe.ucsc.edu/sites/default/files/Bullington%20VTS%201977.pdf
-func BullingtonFigure12Method(p1, p2 float64, d Distance, terrain []float64) (dist, height float64) {
+func BullingtonFigure12Method(p1, p2 float64, d Distance, terrain []float64) (d1, d2, height float64) {
 	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
 
 	θ1, θ2 := findBullingtonFigure12Angles(x, y, l)
 
-	dist, height = solveBullingtonFigureTwelveDist(θ1, θ2, l)
+	d1, height = solveBullingtonFigureTwelveDist(θ1, θ2, l)
+	d2 = l - d1
 
-	return dist, height
+	return d1, d2, height
 }
 
 func findBullingtonFigure12Angles(x, y []float64, d float64) (θ1, θ2 float64) {
