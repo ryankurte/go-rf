@@ -146,15 +146,17 @@ func CalculateFoliageLoss(freq Frequency, depth Distance) (Attenuation, error) {
 		return 0, fmt.Errorf("Frequency %.2f is not between 230MHz and 95GHz as required by the Weissberger model", freq)
 	}
 
-	if depth < WeissbergerMinDist || WeissbergerMaxDist > 0 {
+	if depth < WeissbergerMinDist || depth > WeissbergerMaxDist {
 		return 0, fmt.Errorf("Depth %.2f is not between 0 and 400m as required by the Weissberger model", depth)
 	}
 
 	fading := 0.0
-	if depth > 00.0 && depth <= 14.0 {
-		fading = 0.45 * math.Pow(float64(freq), 0.284) * float64(depth)
+	if depth > 0.0 && depth <= 14.0 {
+		fading = 0.45 * math.Pow(float64(freq/GHz), 0.284) * float64(depth)
 	} else if depth > 14.0 && depth <= 400.0 {
-		fading = 1.33 * math.Pow(float64(freq), 0.284) * math.Pow(float64(depth), 0.588)
+		fading = 1.33 * math.Pow(float64(freq/GHz), 0.284) * math.Pow(float64(depth), 0.588)
+	} else {
+		return 0, fmt.Errorf("Depth %.2f is not between 0 and 400m as required by the Weissberger model", depth)
 	}
 
 	return Attenuation(fading), nil
