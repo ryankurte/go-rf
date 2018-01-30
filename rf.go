@@ -187,24 +187,22 @@ func CalculateWeibullFading(freq Frequency) (Attenuation, error) {
 // height and distance for use in the Fresnell-Kirchoff path loss approximation.
 // Note that this implementation is not accurate for most negative (below LOS) impingements
 // See: https://hams.soe.ucsc.edu/sites/default/files/Bullington%20VTS%201977.pdf
-func BullingtonFigure12Method(p1, p2 float64, d Distance, terrain []float64) (d1, d2, height float64) {
-	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
+func BullingtonFigure12Method(x, y []float64, d Distance) (d1, d2 Distance, height float64) {
+	θ1, θ2 := findBullingtonFigure12Angles(x, y, d)
 
-	θ1, θ2 := findBullingtonFigure12Angles(x, y, l)
-
-	d1, height = solveBullingtonFigureTwelveDist(θ1, θ2, l)
-	d2 = l - d1
+	d1, height = solveBullingtonFigureTwelveDist(θ1, θ2, d)
+	d2 = d - d1
 
 	return d1, d2, height
 }
 
-func findBullingtonFigure12Angles(x, y []float64, d float64) (θ1, θ2 float64) {
+func findBullingtonFigure12Angles(x, y []float64, d Distance) (θ1, θ2 float64) {
 	// Find minimum angles
 	maxθ1, maxθ2 := -math.Pi/2, -math.Pi/2
 
 	for i := 1; i < len(x)-1; i++ {
 		θ1 := math.Atan2(y[i], x[i])
-		θ2 := math.Atan2(y[i], d-x[i])
+		θ2 := math.Atan2(y[i], float64(d)-x[i])
 
 		if θ1 > maxθ1 {
 			maxθ1 = θ1
@@ -218,27 +216,25 @@ func findBullingtonFigure12Angles(x, y []float64, d float64) (θ1, θ2 float64) 
 	return maxθ1, maxθ2
 }
 
-func solveBullingtonFigureTwelveDist(θb, θc, l float64) (dist, height float64) {
+func solveBullingtonFigureTwelveDist(θb, θc float64, d Distance) (dist Distance, height float64) {
 	θa := math.Pi - θb - θc
 
-	r := l / math.Sin(θa)
+	r := float64(d) / math.Sin(θa)
 
 	C := r * math.Sin(θc)
 	height = math.Sin(θb) * C
-	dist = math.Cos(θb) * C
+	dist = Distance(math.Cos(θb) * C)
 
 	return dist, height
 }
 
 // FresnelImpingementMax computes the maximum first fresnel zone impingement due to terrain between two points
-func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []float64) (maxImpingement float64, point Distance) {
-	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
-
-	maxImpingement, point = 0.0, Distance(l/2)
+func FresnelImpingementMax(x, y []float64, d Distance, f Frequency) (maxImpingement float64, point Distance) {
+	maxImpingement, point = 0.0, d/2
 
 	for i := 1; i < len(x)-1; i++ {
 		d1 := Distance(x[i])
-		d2 := Distance(l) - d1
+		d2 := Distance(d) - d1
 
 		// Calculate size of fresnel zone
 		fresnelZone, err := FresnelPoint(d1, d2, f, 1)

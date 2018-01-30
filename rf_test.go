@@ -191,7 +191,7 @@ func TestRFUtils(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				θ1, θ2 := findBullingtonFigure12Angles(test.x, test.y, test.d)
+				θ1, θ2 := findBullingtonFigure12Angles(test.x, test.y, Distance(test.d))
 				assert.InDelta(t, test.θ1, θ1, allowedError)
 				assert.InDelta(t, test.θ2, θ2, allowedError)
 			})
@@ -200,9 +200,10 @@ func TestRFUtils(t *testing.T) {
 
 	t.Run("Bullington method (figure 12) angles to distance", func(t *testing.T) {
 		tests := []struct {
-			name      string
-			θ1, θ2, l float64
-			h, d      float64
+			name   string
+			θ1, θ2 float64
+			l      Distance
+			h, d   float64
 		}{
 			{
 				"Positive and equal angles",
@@ -227,7 +228,7 @@ func TestRFUtils(t *testing.T) {
 			t.Run(test.name, func(t *testing.T) {
 				d, h := solveBullingtonFigureTwelveDist(test.θ1, test.θ2, test.l)
 				assert.InDelta(t, test.h, h, allowedError)
-				assert.InDelta(t, test.d, d, allowedError)
+				assert.InDelta(t, test.d, float64(d), allowedError)
 			})
 		}
 	})
@@ -305,7 +306,9 @@ func TestRFUtils(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				i, p := FresnelImpingementMax(test.p1, test.p2, test.d, test.f, test.t)
+				x, y, d := TerrainToPathXY(test.p1, test.p2, test.d, test.t)
+
+				i, p := FresnelImpingementMax(x, y, Distance(d), test.f)
 
 				assert.InDelta(t, float64(test.i), float64(i), allowedError)
 				assert.InDelta(t, float64(test.p), float64(p), allowedError)

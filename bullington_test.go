@@ -21,7 +21,9 @@ func TestExample(t *testing.T) {
 	GraphBullingtonFigure12("graph-absolute.png", false, alt1, alt2, Distance(distance), terrain)
 	GraphBullingtonFigure12("graph-normalised.png", true, alt1, alt2, Distance(distance), terrain)
 
-	d1, d2, h := BullingtonFigure12Method(alt1, alt2, Distance(distance), terrain)
+	x, y, d := TerrainToPathXY(alt1, alt2, Distance(distance), terrain)
+
+	d1, d2, h := BullingtonFigure12Method(x, y, Distance(d))
 	assert.InDelta(t, 141.85, d1, 0.01)
 	assert.InDelta(t, 134.23, d2, 0.01)
 	assert.InDelta(t, 0.58, h, 0.01)

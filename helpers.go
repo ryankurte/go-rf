@@ -179,11 +179,11 @@ func GraphBullingtonFigure12(filename string, normalised bool, p1, p2 float64, d
 
 	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
 
-	θ1, θ2 := findBullingtonFigure12Angles(x, y, l)
+	θ1, θ2 := findBullingtonFigure12Angles(x, y, Distance(l))
 
-	dist, height := solveBullingtonFigureTwelveDist(θ1, θ2, l)
+	dist, height := solveBullingtonFigureTwelveDist(θ1, θ2, Distance(l))
 
-	impingementX, impingementY := UnNormalisePoint(p1, p2, d, dist, height)
+	impingementX, impingementY := UnNormalisePoint(p1, p2, d, float64(dist), height)
 
 	terrainX := make([]float64, len(terrain))
 	for i := range terrain {
@@ -234,7 +234,7 @@ func GraphBullingtonFigure12(filename string, normalised bool, p1, p2 float64, d
 				YValues: y,
 				Name:    "Normalised Terrain",
 			}, chart.ContinuousSeries{
-				XValues: []float64{0, dist, l},
+				XValues: []float64{0, float64(dist), l},
 				YValues: []float64{0, height, 0},
 				Name:    "Equivalent Knife Edge",
 			},
