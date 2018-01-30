@@ -228,3 +228,27 @@ func solveBullingtonFigureTwelveDist(θb, θc, l float64) (dist, height float64)
 
 	return dist, height
 }
+
+func ModifiedBullingtonFigure12Method(p1, p2 float64, d Distance, f Frequency, terrain []float64) (d1, d2, height float64, err error) {
+	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
+
+	maxImpingementLR, maxImpingementRL := 0.0, 0.0
+
+	// For each terrain point l->r
+	for i := 1; i < len(x); i++ {
+		// Calculate first fresnel zone at point
+		l1 := Distance(l) / Distance(len(x)*i)
+		l2 := Distance(l) - l1
+		p, err := FresnelPoint(l1, l2, f, 1)
+		if err != nil {
+			return 0, 0, 0, err
+		}
+
+		// Calculate impingement
+
+		// Calculate angles
+
+	}
+
+	return 0, 0, 0, nil
+}
