@@ -236,13 +236,9 @@ func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []fl
 
 	maxImpingement, point = 0.0, Distance(l/2)
 
-	log.Printf("Boop len(x): %d len(y): %d L: %.2f", len(x), len(y), l)
-
 	for i := 1; i < len(x)-1; i++ {
 		d1 := Distance(x[i])
 		d2 := Distance(l) - d1
-
-		log.Printf("d1: %.2f d2: %.2f", d1, d2)
 
 		// Calculate size of fresnel zone
 		fresnelZone, err := FresnelPoint(d1, d2, f, 1)
@@ -250,9 +246,8 @@ func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []fl
 			return maxImpingement, point, err
 		}
 
-		impingement := 0.0
-
 		// Calculate impingement
+		impingement := 0.0
 		if y[i] > fresnelZone/2 {
 			impingement = 1.0
 		} else if y[i] < -fresnelZone/2 {
@@ -261,12 +256,11 @@ func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []fl
 			impingement = (y[i] + fresnelZone/2) / fresnelZone
 		}
 
+		// Record max
 		if impingement > maxImpingement {
 			maxImpingement = impingement
 			point = d1
 		}
-
-		log.Printf("X: %.2f Y: %.2f F: %.2f I: %.2f", d1, y[i], fresnelZone, impingement)
 	}
 
 	return maxImpingement, point, err
