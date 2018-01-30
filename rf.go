@@ -185,6 +185,7 @@ func CalculateWeibullFading(freq Frequency) (Attenuation, error) {
 
 // BullingtonFigure12Method implements the Bullington Figure 12 (intersecting horizons) method to approximate
 // height and distance for use in the Fresnell-Kirchoff path loss approximation.
+// Note that this implementation is not accurate for most negative (below LOS) impingements
 // See: https://hams.soe.ucsc.edu/sites/default/files/Bullington%20VTS%201977.pdf
 func BullingtonFigure12Method(p1, p2 float64, d Distance, terrain []float64) (d1, d2, height float64) {
 	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
@@ -227,4 +228,46 @@ func solveBullingtonFigureTwelveDist(θb, θc, l float64) (dist, height float64)
 	dist = math.Cos(θb) * C
 
 	return dist, height
+}
+
+// FresnelImpingementMax computes the maximum first fresnel zone impingement due to terrain between two points
+func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []float64) (maxImpingement float64, point Distance, err error) {
+	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
+
+	maxImpingement, point = 0.0, Distance(l/2)
+
+	log.Printf("Boop len(x): %d len(y): %d L: %.2f", len(x), len(y), l)
+
+	for i := 1; i < len(x)-1; i++ {
+		d1 := Distance(x[i])
+		d2 := Distance(l) - d1
+
+		log.Printf("d1: %.2f d2: %.2f", d1, d2)
+
+		// Calculate size of fresnel zone
+		fresnelZone, err := FresnelPoint(d1, d2, f, 1)
+		if err != nil {
+			return maxImpingement, point, err
+		}
+
+		impingement := 0.0
+
+		// Calculate impingement
+		if y[i] > fresnelZone/2 {
+			impingement = 1.0
+		} else if y[i] < -fresnelZone/2 {
+			impingement = 0.0
+		} else {
+			impingement = (y[i] + fresnelZone/2) / fresnelZone
+		}
+
+		if impingement > maxImpingement {
+			maxImpingement = impingement
+			point = d1
+		}
+
+		log.Printf("X: %.2f Y: %.2f F: %.2f I: %.2f", d1, y[i], fresnelZone, impingement)
+	}
+
+	return maxImpingement, point, err
 }

@@ -276,4 +276,43 @@ func TestRFUtils(t *testing.T) {
 		}
 	})
 
+	t.Run("Computes maximum fresnel zone impingement over terrain", func(t *testing.T) {
+		tests := []struct {
+			name   string
+			p1, p2 float64
+			d      Distance
+			f      Frequency
+			t      []float64
+			i, p   float64
+		}{
+			{
+				"No impingement",
+				0.0, 0.0, 50.0 * M, 433 * MHz,
+				[]float64{-100.0, -100.0, -100.0, -100.0, -100.0},
+				0.0, 25.0,
+			}, {
+				"50% impingement",
+				0.0, 0.0, 50.0 * M, 433 * MHz,
+				[]float64{-100.0, -100.0, 0.0, -100.0, -100.0},
+				0.5, 25.0,
+			}, {
+				"100% impingement",
+				0.0, 0.0, 50.0 * M, 433 * MHz,
+				[]float64{-100.0, -100.0, 2.94, -100.0, -100.0},
+				1.0, 25.0,
+			},
+		}
+
+		for _, test := range tests {
+			t.Run(test.name, func(t *testing.T) {
+				i, p, err := FresnelImpingementMax(test.p1, test.p2, test.d, test.f, test.t)
+				assert.Nil(t, err)
+
+				assert.InDelta(t, float64(test.i), float64(i), allowedError)
+				assert.InDelta(t, float64(test.p), float64(p), allowedError)
+
+			})
+		}
+	})
+
 }
