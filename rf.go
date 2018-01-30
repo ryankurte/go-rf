@@ -243,7 +243,8 @@ func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []fl
 		// Calculate size of fresnel zone
 		fresnelZone, err := FresnelPoint(d1, d2, f, 1)
 		if err != nil {
-			return maxImpingement, point, err
+			// Skip invalid points (where wavelength is not << d1 or d2)
+			continue
 		}
 
 		// Calculate impingement
