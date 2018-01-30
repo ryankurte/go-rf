@@ -305,12 +305,10 @@ func TestRFUtils(t *testing.T) {
 
 		for _, test := range tests {
 			t.Run(test.name, func(t *testing.T) {
-				i, p, err := FresnelImpingementMax(test.p1, test.p2, test.d, test.f, test.t)
-				assert.Nil(t, err)
+				i, p := FresnelImpingementMax(test.p1, test.p2, test.d, test.f, test.t)
 
 				assert.InDelta(t, float64(test.i), float64(i), allowedError)
 				assert.InDelta(t, float64(test.p), float64(p), allowedError)
-
 			})
 		}
 	})

@@ -231,7 +231,7 @@ func solveBullingtonFigureTwelveDist(θb, θc, l float64) (dist, height float64)
 }
 
 // FresnelImpingementMax computes the maximum first fresnel zone impingement due to terrain between two points
-func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []float64) (maxImpingement float64, point Distance, err error) {
+func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []float64) (maxImpingement float64, point Distance) {
 	x, y, l := TerrainToPathXY(p1, p2, d, terrain)
 
 	maxImpingement, point = 0.0, Distance(l/2)
@@ -264,5 +264,5 @@ func FresnelImpingementMax(p1, p2 float64, d Distance, f Frequency, terrain []fl
 		}
 	}
 
-	return maxImpingement, point, err
+	return maxImpingement, point
 }
